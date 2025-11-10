@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kunjungan Online — Pemasyarakatan</title>
+<meta name="theme-color" content="#0f172a"/>
+<style>
+  :root{--bg:#0b1220;--card:#0f172a;--muted:#94a3b8;--line:#1f2937;--text:#e5e7eb;--acc:#22c55e;--warn:#f59e0b;--err:#ef4444}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Inter,Roboto,Arial}
+  header{position:sticky;top:0;background:#0f172acc;border-bottom:1px solid var(--line);backdrop-filter:blur(6px);z-index:10}
+  .wrap{max-width:1024px;margin:0 auto;padding:16px}
+  h1{font-size:22px;margin:0}
+  .sub{font-size:12px;color:var(--muted)}
+  main{padding:16px}
+  .grid{display:grid;gap:14px}
+  @media(min-width:900px){.grid{grid-template-columns:1.2fr 1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+  .small{font-size:12px;color:var(--muted)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1 1 220px}
+  .label{font-size:12px;color:var(--muted)}
+  input,select,textarea,button{width:100%;border:1px solid var(--line);background:#0b1220;color:var(--text);border-radius:10px;padding:10px}
+  select{appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-right:36px;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="%23cbd5e1"><path d="M5 7l5 6 5-6z"/></svg>');
+    background-repeat:no-repeat;background-position:right 10px center}
+  input:focus,select:focus,textarea:focus,button:focus{outline:none;box-shadow:0 0 0 3px rgba(51,65,85,.4)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);padding:10px 14px;border-radius:999px;cursor:pointer}
+  .btn.primary{background:#16a34a;border-color:#15803d}
+  .btn.ghost{background:transparent}
+  .section-title{font-weight:600;margin:6px 0 10px}
+  .divider{height:1px;background:var(--line);margin:8px 0}
+  .ticket{display:grid;gap:10px;border:1px dashed var(--line);border-radius:14px;padding:12px}
+  .badge{display:inline-block;border:1px solid var(--line);padding:4px 8px;border-radius:999px;font-size:12px;color:#a7f3d0;background:#064e3b}
+  .table{width:100%;border-collapse:collapse;font-size:14px}
+  .table th,.table td{border:1px solid var(--line);padding:8px}
+  .table th{background:#0e172a;color:#cbd5e1;text-align:left}
+  .warn{color:var(--warn)} .err{color:var(--err)}
+  .hidden{display:none}
+  .thumb{width:100%;max-width:200px;border:1px solid var(--line);border-radius:10px;background:#0b1220}
+  .slot{border:1px solid var(--line);border-radius:12px;padding:10px}
+  .slot h4{margin:0 0 6px 0;font-size:14px}
+  .cam{display:grid;gap:8px}
+  video{width:100%;max-width:280px;border-radius:10px;border:1px solid var(--line)}
+  canvas{width:100%;max-width:220px;border:1px solid var(--line);border-radius:10px;background:#0b1220}
+  .info{font-size:12px;color:#a3e635}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Kunjungan Online — Pemasyarakatan</h1>
+    <div class="sub">Self-service pemesanan slot kunjungan keluarga untuk WBP</div>
+  </div>
+</header>
+
+<main class="wrap grid">
+  <!-- KIRI -->
+  <section class="card">
+    <div class="section-title">Langkah 1 — Pilih WBP (Narapidana)</div>
+    <div class="row">
+      <div class="field">
+        <label class="label" for="wbpSearch">Cari WBP (nama/nomor register)</label>
+        <input id="wbpSearch" placeholder="Contoh: Andi / REG-0002"/>
+      </div>
+      <div class="field">
+        <label class="label" for="wbpSelect">Daftar WBP</label>
+        <select id="wbpSelect"></select>
+      </div>
+    </div>
+    <div id="wbpInfo" class="small" style="margin-top:6px"></div>
+
+    <div class="divider"></div>
+    <div class="section-title">Langkah 2 — Pilih Lokasi & Slot</div>
+    <div class="row">
+      <div class="field">
+        <label class="label" for="lokasi">Lokasi Kunjungan</label>
+        <select id="lokasi">
+          <option value="Lapas Kelas I">Lapas Kelas I</option>
+          <option value="Lapas Kelas IIA">Lapas Kelas IIA</option>
+          <option value="Rutan Kelas I">Rutan Kelas I</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="tgl">Tanggal</label>
+        <input id="tgl" type="date"/>
+      </div>
+      <div class="field">
+        <label class="label" for="slot">Jam (Kuota Tersisa)</label>
+        <select id="slot"></select>
+      </div>
+    </div>
+    <div id="quotaInfo" class="small" style="margin-top:6px"></div>
+
+    <div class="divider"></div>
+    <div class="section-title">Langkah 3 — Data Pengunjung & Pengikut</div>
+    <div class="row">
+      <div class="field"><label class="label" for="visNama">Nama Pengunjung</label><input id="visNama" placeholder="Nama sesuai KTP"/></div>
+      <div class="field"><label class="label" for="visNIK">NIK</label><input id="visNIK" placeholder="16 digit"/></div>
+      <div class="field"><label class="label" for="visHub">Hubungan</label><select id="visHub"><option>Orang Tua</option><option>Suami/Istri</option><option>Anak</option><option>Saudara</option><option>Wali</option></select></div>
+    </div>
+    <div class="row">
+      <div class="field"><label class="label" for="followerF">Jumlah Pengikut — Wanita</label><input id="followerF" type="number" min="0" value="0"/></div>
+      <div class="field"><label class="label" for="followerM">Jumlah Pengikut — Laki-laki</label><input id="followerM" type="number" min="0" value="0"/></div>
+    </div>
+
+    <!-- KTP: Unggah / Foto (dengan kompresi) -->
+    <div class="row">
+      <div class="field">
+        <label class="label" for="ktpMethod">KTP</label>
+        <select id="ktpMethod">
+          <option value="upload">Unggah File</option>
+          <option value="camera">Foto KTP</option>
+        </select>
+      </div>
+
+      <!-- Upload -->
+      <div class="field" id="ktpUploadWrap">
+        <label class="label" for="visKTP">Unggah KTP (gambar/PDF)</label>
+        <input id="visKTP" type="file" accept="image/*,.pdf"/>
+        <canvas id="ktpUploadPreview" class="thumb hidden"></canvas>
+        <div id="ktpUploadInfo" class="info"></div>
+      </div>
+
+      <!-- Camera -->
+      <div class="field hidden" id="ktpCamWrap">
+        <label class="label">Foto KTP (kamera)</label>
+        <div class="slot cam">
+          <video id="ktpVideo" playsinline></video>
+          <div class="actions">
+            <button id="ktpStart" class="btn">Start Kamera</button>
+            <button id="ktpCapture" class="btn">Capture (Compress)</button>
+            <button id="ktpStop" class="btn ghost">Stop</button>
+          </div>
+          <canvas id="ktpCanvas" width="640" height="400" class="thumb"></canvas>
+          <div id="ktpCamInfo" class="info"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">Langkah 4 — Selfie Wajib</div>
+    <div class="small" id="selfieNote">Jumlah slot selfie = 1 (pengunjung utama) + total pengikut. (Otomatis terkompres)</div>
+    <div id="selfieWrap" class="row" style="margin-top:8px"></div>
+
+    <div class="divider"></div>
+    <div class="actions">
+      <button id="btnPreview" class="btn primary">Tinjau & Terbitkan Tiket</button>
+      <span id="msg" class="small"></span>
+    </div>
+  </section>
+
+  <!-- KANAN -->
+  <aside class="card">
+    <div class="section-title">Ringkasan & Tiket</div>
+    <div id="summary" class="small">Isi data di kiri, lalu klik <b>Tinjau & Terbitkan Tiket</b>.</div>
+
+    <div id="ticket" class="ticket hidden" style="margin-top:10px">
+      <div><span class="badge">TIKET KUNJUNGAN</span></div>
+      <div id="tInfo"></div>
+      <canvas id="tQR" width="220" height="220"></canvas>
+      <div class="actions">
+        <button id="btnSavePNG" class="btn">Simpan sebagai PNG</button>
+        <button id="btnNew" class="btn ghost">Buat Pemesanan Baru</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">Riwayat Pemesanan</div>
+    <div id="history" class="small"></div>
+  </aside>
+
+  <!-- ADMIN -->
+  <section id="admin" class="card hidden" style="grid-column:1/-1">
+    <div class="section-title">Admin (Demo) — Pengaturan Slot</div>
+    <div class="row">
+      <div class="field"><label class="label" for="admCap">Kapasitas per slot</label><input id="admCap" type="number" min="1" value="10"/></div>
+      <div class="field"><label class="label" for="admSlots">Jam Slot (pisahkan koma)</label><input id="admSlots" placeholder="09:00, 10:00, 13:00, 14:00"/></div>
+      <div class="field"><label class="label" for="admBlackout">Tanggal Blackout (YYYY-MM-DD, pisahkan koma)</label><input id="admBlackout" placeholder="2025-12-25, 2025-12-31"/></div>
+    </div>
+    <div class="actions">
+      <button id="btnSaveCfg" class="btn primary">Simpan Pengaturan</button>
+      <span id="admMsg" class="small"></span>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===== Helpers ===== */
+const $ = (s)=>document.querySelector(s);
+const LS = { cfg: 'visit_cfg_v1', bookings: 'visit_bookings_v1' };
+const DEFAULT_CFG = { capacity: 10, slots: ["09:00","10:00","11:00","13:00","14:00","15:00"], blackout: [] };
+const WBPS = [
+  {id:"WBP-0001", nama:"Andi Prasetyo", reg:"REG-0001", lokasi:"Lapas Kelas I"},
+  {id:"WBP-0002", nama:"Budi Santoso", reg:"REG-0002", lokasi:"Lapas Kelas IIA"},
+  {id:"WBP-0003", nama:"Citra Dewi", reg:"REG-0003", lokasi:"Rutan Kelas I"},
+];
+let CFG = loadCfg();
+
+function loadCfg(){ try{ return Object.assign({}, DEFAULT_CFG, JSON.parse(localStorage.getItem(LS.cfg)||'{}')); }catch(e){ return {...DEFAULT_CFG}; } }
+function saveCfg(){ localStorage.setItem(LS.cfg, JSON.stringify(CFG)); }
+function bookings(){ try{ return JSON.parse(localStorage.getItem(LS.bookings)||'[]'); }catch(e){ return []; } }
+function saveBooking(b){ const arr = bookings(); arr.push(b); localStorage.setItem(LS.bookings, JSON.stringify(arr)); }
+function fmtDateID(dStr){ const d = new Date(dStr+"T00:00:00"); return d.toLocaleDateString('id-ID',{weekday:'long', year:'numeric', month:'long', day:'numeric'}); }
+function randCode(n=6){ const s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", a=[]; for(let i=0;i<n;i++) a.push(s[Math.floor(Math.random()*s.length)]); return a.join(''); }
+function drawPattern(canvas, seedText){
+  const ctx = canvas.getContext('2d'), w = canvas.width, h=canvas.height;
+  ctx.fillStyle = "#0b1220"; ctx.fillRect(0,0,w,h);
+  let hash=0; for(let i=0;i<seedText.length;i++){ hash = (hash*31 + seedText.charCodeAt(i))>>>0; }
+  const cols=29, rows=29, cell=Math.floor(Math.min(w,h)/cols);
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      hash ^= hash<<13; hash ^= hash>>>17; hash ^= hash<<5;
+      const bit = (hash>>>0) & 1;
+      const col = bit ? "#e5e7eb" : "#0b1220";
+      const sz = cell-1;
+      if(sz>0){ const cx=x*cell, cy=y*cell; const c=canvas.getContext('2d'); c.fillStyle=col; c.fillRect(cx,cy,sz,sz); }
+    }
+  }
+  ctx.strokeStyle = "#1f2937"; ctx.lineWidth=2; ctx.strokeRect(2,2,w-4,h-4);
+}
+function saveCanvasPNG(canvas, filename="tiket_kunjungan.png"){ const a=document.createElement('a'); a.download=filename; a.href=canvas.toDataURL('image/png'); a.click(); }
+function prettySize(n){ return n>1024*1024 ? (n/1024/1024).toFixed(2)+' MB' : (n/1024).toFixed(0)+' KB'; }
+function bytesFromDataURL(d){ const b64 = d.split(',')[1]||''; return Math.floor((b64.length*3)/4); }
+
+/* ===== Kompresi Gambar ===== */
+function compressImageElement(img, {maxSize=1200, quality=0.75}={}){
+  const ow = img.naturalWidth, oh = img.naturalHeight;
+  const ratio = ow>oh ? maxSize/ow : maxSize/oh;
+  const tw = Math.round(ow*ratio), th = Math.round(oh*ratio);
+  const off = document.createElement('canvas'); off.width=tw; off.height=th;
+  off.getContext('2d').drawImage(img, 0, 0, tw, th);
+  return off.toDataURL('image/jpeg', quality);
+}
+function compressFromVideo(videoEl, previewCanvas, {maxSize=1200, quality=0.75}={}){
+  const vw = videoEl.videoWidth || 640, vh = videoEl.videoHeight || 480;
+  const ratio = vw>vh ? maxSize/vw : maxSize/vh;
+  const tw = Math.round(vw*ratio), th = Math.round(vh*ratio);
+  const off = document.createElement('canvas'); off.width=tw; off.height=th;
+  off.getContext('2d').drawImage(videoEl, 0, 0, tw, th);
+  const dataURL = off.toDataURL('image/jpeg', quality);
+  // preview kecil
+  const ctx = previewCanvas.getContext('2d');
+  previewCanvas.width = Math.min(320, tw);
+  previewCanvas.height = Math.round(previewCanvas.width * th / tw);
+  ctx.fillStyle="#0b1220"; ctx.fillRect(0,0,previewCanvas.width, previewCanvas.height);
+  const img = new Image(); img.onload=()=>ctx.drawImage(img,0,0,previewCanvas.width, previewCanvas.height); img.src=dataURL;
+  return dataURL;
+}
+
+/* ===== Camera Utils ===== */
+async function startCamera(videoEl){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+    videoEl.srcObject = stream; await videoEl.play(); return stream;
+  }catch(e){ alert('Tidak bisa mengakses kamera. Izinkan kamera pada browser.'); throw e; }
+}
+function stopCamera(videoEl){ const st=videoEl.srcObject; if(st&&st.getTracks) st.getTracks().forEach(t=>t.stop()); videoEl.srcObject=null; }
+
+/* ===== State KTP & Selfie ===== */
+let ktpImageData = null; // dataURL terkompres (upload/camera)
+let selfieImages = [];   // dataURL terkompres per slot
+
+/* ===== UI Init ===== */
+const isAdmin = new URLSearchParams(location.search).get('admin')==='1';
+if(isAdmin) $('#admin').classList.remove('hidden');
+
+function populateWBPs(filter=""){
+  const sel = $('#wbpSelect'); sel.innerHTML = "";
+  const q = filter.trim().toLowerCase();
+  WBPS.filter(w=>!q || w.nama.toLowerCase().includes(q) || w.reg.toLowerCase().includes(q))
+      .forEach(w=>{ const opt=document.createElement('option'); opt.value=w.id; opt.textContent=`${w.nama} — ${w.reg}`; sel.appendChild(opt); });
+  if(sel.value){ showWBPInfo(sel.value); }
+}
+function showWBPInfo(id){
+  const w = WBPS.find(x=>x.id===id);
+  $('#wbpInfo').innerHTML = w ? `Terpilih: <b>${w.nama}</b> (${w.reg}) — ${w.lokasi}` : '';
+}
+function populateSlots(){
+  const sel = $('#slot'); sel.innerHTML="";
+  const tgl = $('#tgl').value, loc = $('#lokasi').value;
+  if(!tgl){ sel.innerHTML='<option value="">Pilih tanggal dulu</option>'; return; }
+  if(CFG.blackout.includes(tgl)){ sel.innerHTML='<option value="">Tanggal non-layanan (blackout)</option>'; return; }
+  const bks = bookings().filter(b=>b.tgl===tgl && b.lokasi===loc);
+  CFG.slots.forEach(s=>{
+    const terpakai = bks.filter(b=>b.slot===s).length;
+    const sisa = Math.max(0, CFG.capacity - terpakai);
+    const opt = document.createElement('option'); opt.value = s; opt.textContent = `${s} — sisa ${sisa}`; opt.disabled = sisa<=0; sel.appendChild(opt);
+  });
+  $('#quotaInfo').textContent = `Kapasitas per slot: ${CFG.capacity}.`;
+}
+function refreshHistory(){
+  const wrap = $('#history'); const arr = bookings().slice().reverse();
+  if(!arr.length){ wrap.textContent="Belum ada pemesanan."; return; }
+  let html = `<table class="table"><thead><tr><th>Tiket</th><th>WBP</th><th>Tanggal</th><th>Jam</th><th>Lokasi</th><th>Pengunjung</th><th>Pengikut</th></tr></thead><tbody>`;
+  for(const b of arr){
+    html += `<tr><td>${b.code}</td><td>${b.wbpNama} (${b.wbpReg})</td><td>${b.tgl}</td><td>${b.slot}</td><td>${b.lokasi}</td><td>${b.visNama}</td><td>${b.followerF}/${b.followerM}</td></tr>`;
+  }
+  html += `</tbody></table>`; wrap.innerHTML = html;
+}
+
+/* ===== Selfie Slots ===== */
+function totalSelfieNeeded(){
+  const f = Math.max(0, Number($('#followerF').value||0));
+  const m = Math.max(0, Number($('#followerM').value||0));
+  return 1 + f + m;
+}
+function ensureSelfieSlots(){
+  const need = totalSelfieNeeded();
+  if(selfieImages.length !== need){ selfieImages = new Array(need).fill(null); }
+  const wrap = $('#selfieWrap'); wrap.innerHTML = '';
+  for(let i=0;i<need;i++){
+    const div = document.createElement('div'); div.className = 'slot';
+    div.innerHTML = `
+      <h4>Selfie #${i+1}</h4>
+      <div class="cam">
+        <video id="sv_${i}" playsinline></video>
+        <div class="actions">
+          <button class="btn" data-act="start" data-i="${i}">Start Kamera</button>
+          <button class="btn" data-act="cap" data-i="${i}">Capture (Compress)</button>
+          <button class="btn ghost" data-act="stop" data-i="${i}">Stop</button>
+        </div>
+        <canvas id="sc_${i}" class="thumb"></canvas>
+        <div id="si_${i}" class="info"></div>
+      </div>`;
+    wrap.appendChild(div);
+  }
+}
+$('#followerF').addEventListener('input', ensureSelfieSlots);
+$('#followerM').addEventListener('input', ensureSelfieSlots);
+ensureSelfieSlots();
+
+$('#selfieWrap').addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button[data-act]'); if(!btn) return;
+  const idx = Number(btn.dataset.i), act = btn.dataset.act;
+  const v = document.getElementById(`sv_${idx}`), c = document.getElementById(`sc_${idx}`), info = document.getElementById(`si_${idx}`);
+  if(act==='start'){ await startCamera(v); }
+  if(act==='cap'){ const d = compressFromVideo(v, c, {maxSize:720, quality:0.7}); selfieImages[idx]=d; info.textContent=`Selfie tersimpan: ${prettySize(bytesFromDataURL(d))}`; }
+  if(act==='stop'){ stopCamera(v); }
+});
+
+/* ===== KTP: Upload / Camera (Compressed) ===== */
+const ktpMethod = $('#ktpMethod');
+const ktpUpload = $('#visKTP');
+const ktpUploadPreview = $('#ktpUploadPreview');
+const ktpUploadInfo = $('#ktpUploadInfo');
+const ktpCamInfo = $('#ktpCamInfo');
+ktpMethod.addEventListener('change', ()=>{
+  const m = ktpMethod.value;
+  $('#ktpUploadWrap').classList.toggle('hidden', m!=='upload');
+  $('#ktpCamWrap').classList.toggle('hidden', m!=='camera');
+});
+
+ktpUpload.addEventListener('change', ()=>{
+  ktpImageData = null; ktpUploadPreview.classList.add('hidden'); ktpUploadInfo.textContent='';
+  const file = ktpUpload.files && ktpUpload.files[0]; if(!file) return;
+  if(file.type === 'application/pdf'){ ktpUploadInfo.textContent = 'PDF diunggah (tidak dikompresi).'; return; }
+  if(!file.type.startsWith('image/')){ ktpUploadInfo.textContent = 'Format tidak didukung.'; return; }
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      // kompres
+      ktpImageData = compressImageElement(img, {maxSize:1200, quality:0.75});
+      // preview
+      const ctx = ktpUploadPreview.getContext('2d');
+      const temp = new Image();
+      temp.onload = ()=>{
+        ktpUploadPreview.width = Math.min(320, temp.width);
+        ktpUploadPreview.height = Math.round(ktpUploadPreview.width * temp.height / temp.width);
+        ctx.fillStyle="#0b1220"; ctx.fillRect(0,0,ktpUploadPreview.width, ktpUploadPreview.height);
+        ctx.drawImage(temp, 0, 0, ktpUploadPreview.width, ktpUploadPreview.height);
+        ktpUploadPreview.classList.remove('hidden');
+        ktpUploadInfo.textContent = `KTP (compressed): ${prettySize(bytesFromDataURL(ktpImageData))}`;
+      };
+      temp.src = ktpImageData;
+    };
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+});
+
+const ktpVideo = $('#ktpVideo'), ktpCanvas = $('#ktpCanvas');
+let ktpStream=null;
+$('#ktpStart').addEventListener('click', async ()=>{ ktpStream = await startCamera(ktpVideo); });
+$('#ktpCapture').addEventListener('click', ()=>{
+  const dataURL = compressFromVideo(ktpVideo, ktpCanvas, {maxSize:1200, quality:0.75});
+  ktpImageData = dataURL;
+  ktpCamInfo.textContent = `KTP (compressed): ${prettySize(bytesFromDataURL(dataURL))}`;
+});
+$('#ktpStop').addEventListener('click', ()=>{ stopCamera(ktpVideo); ktpStream=null; });
+
+/* ===== Events utama ===== */
+$('#wbpSearch').addEventListener('input', e=>populateWBPs(e.target.value));
+$('#wbpSelect').addEventListener('change', e=>showWBPInfo(e.target.value));
+$('#lokasi').addEventListener('change', populateSlots);
+$('#tgl').addEventListener('change', populateSlots);
+
+$('#btnPreview').addEventListener('click', ()=>{
+  const wbpId = $('#wbpSelect').value;
+  const wbp = WBPS.find(w=>w.id===wbpId);
+  const lokasi = $('#lokasi').value;
+  const tgl = $('#tgl').value;
+  const slot = $('#slot').value;
+  const followerF = Math.max(0, Number($('#followerF').value||0));
+  const followerM = Math.max(0, Number($('#followerM').value||0));
+  const vis = { nama: $('#visNama').value.trim(), nik: $('#visNIK').value.trim(), hub: $('#visHub').value };
+
+  const msg = (t)=>{$('#msg').textContent=t; setTimeout(()=>$('#msg').textContent="", 3000);}
+  if(!wbp){ msg("Pilih WBP terlebih dahulu."); return; }
+  if(!tgl){ msg("Pilih tanggal kunjungan."); return; }
+  if(!slot){ msg("Pilih slot jam."); return; }
+  if(!vis.nama || !vis.nik || vis.nik.length<8){ msg("Lengkapi nama & NIK pengunjung."); return; }
+
+  // Validasi selfie
+  const need = totalSelfieNeeded();
+  const got = selfieImages.filter(x=>!!x).length;
+  if(got < need){ msg(`Selfie belum lengkap (${got}/${need}). Harap ambil semua selfie terlebih dahulu.`); return; }
+
+  // (Opsional) Validasi KTP minimal ada salah satu (upload/camera) → aktifkan jika wajib:
+  // if(!ktpImageData && (!ktpUpload.files || !ktpUpload.files[0])) { msg("Unggah atau foto KTP terlebih dahulu."); return; }
+
+  // Kuota lokal
+  const bks = bookings().filter(b=>b.tgl===tgl && b.lokasi===lokasi && b.slot===slot);
+  if(bks.length >= CFG.capacity){ msg("Slot penuh. Pilih jam lain."); populateSlots(); return; }
+
+  // Kode tiket
+  const code = `VIS-${randCode(6)}`;
+  const payload = {
+    id: crypto.randomUUID ? crypto.randomUUID() : (Date.now()+"-"+Math.random().toString(16).slice(2)),
+    code, tgl, slot, lokasi,
+    wbpId: wbp.id, wbpNama: wbp.nama, wbpReg: wbp.reg,
+    visNama: vis.nama, visNIK: vis.nik, visHub: vis.hub,
+    followerF, followerM, selfieCount: need, createdAt: new Date().toISOString()
+  };
+  saveBooking(payload);
+
+  // Tampilkan tiket
+  $('#tInfo').innerHTML = `
+    <div><b>${payload.code}</b></div>
+    <div>${payload.wbpNama} — <span class="small">${payload.wbpReg}</span></div>
+    <div>${fmtDateID(payload.tgl)} • ${payload.slot}</div>
+    <div>${payload.lokasi}</div>
+    <div class="small">Pengunjung: <b>${payload.visNama}</b> (${payload.visNIK}) — ${payload.visHub}</div>
+    <div class="small">Pengikut: Wanita ${payload.followerF} / Laki-laki ${payload.followerM}</div>
+    <div class="small">Selfie tervalidasi (compressed): ${payload.selfieCount} orang</div>
+  `;
+  $('#ticket').classList.remove('hidden');
+
+  const seed = `${payload.code}|${payload.wbpId}|${payload.tgl}|${payload.slot}|${payload.visNIK}|${payload.followerF}|${payload.followerM}`;
+  drawPattern($('#tQR'), seed);
+
+  $('#summary').innerHTML = `<b>Pemesanan berhasil.</b><br/>Tampilkan tiket di atas saat datang. Simpan sebagai PNG untuk cadangan.`;
+  refreshHistory(); populateSlots();
+});
+
+/* ===== Admin ===== */
+$('#btnSaveCfg')?.addEventListener('click', ()=>{
+  const cap = Math.max(1, Number($('#admCap').value||DEFAULT_CFG.capacity));
+  const slots = ($('#admSlots').value||DEFAULT_CFG.slots.join(', ')).split(',').map(s=>s.trim()).filter(Boolean);
+  const blackout = ($('#admBlackout').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  CFG = {capacity: cap, slots, blackout}; saveCfg();
+  $('#admMsg').textContent = 'Tersimpan.'; setTimeout(()=>$('#admMsg').textContent='', 2000);
+  populateSlots();
+});
+
+/* ===== Boot ===== */
+(function boot(){
+  if(new URLSearchParams(location.search).get('admin')==='1') $('#admin').classList.remove('hidden');
+  $('#admCap').value = CFG.capacity; $('#admSlots').value = CFG.slots.join(', '); $('#admBlackout').value = CFG.blackout.join(', ');
+  populateWBPs(''); $('#wbpSelect').selectedIndex = 0; showWBPInfo($('#wbpSelect').value);
+  const d = new Date(); d.setDate(d.getDate()+1); $('#tgl').value = d.toISOString().slice(0,10);
+  populateSlots(); refreshHistory(); ensureSelfieSlots();
+})();
+</script>
+</body>
+</html>
